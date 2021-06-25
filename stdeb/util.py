@@ -1198,18 +1198,22 @@ class DebianInfo:
             'scripts': scripts
         }
 
-        if force_x_python3_version and with_python3 and x_python3_version and \
-                x_python3_version[0]:
-            # override dh_python3 target to modify the dependencies
-            # to ensure that the passed minimum X-Python3-Version is usedby
-            version = x_python3_version[0]
-            if not version.endswith('~'):
-                version += '~'
+        if dh_python_opts:
+            scripts = ''
+            if force_x_python3_version and with_python3 and x_python3_version and \
+                    x_python3_version[0]:
+                # override dh_python3 target to modify the dependencies
+                # to ensure that the passed minimum X-Python3-Version is usedby
+                version = x_python3_version[0]
+                if not version.endswith('~'):
+                    version += '~'
+                    scripts = (
+                        '        sed -i ' +
+                        r'"s/\([ =]python3:any (\)>= [^)]*\()\)/\\1%s\\2/g" ' +
+                        'debian/%s.substvars') % (version, self.package3)
             self.override_dh_python3 = RULES_OVERRIDE_PYTHON3 % {
-                'scripts': (
-                    '        sed -i ' +
-                    r'"s/\([ =]python3:any (\)>= [^)]*\()\)/\\1%s\\2/g" ' +
-                    'debian/%s.substvars') % (version, self.package3)
+                'scripts': scripts,
+                'dh_python_opts': dh_python_opts
             }
         else:
             self.override_dh_python3 = ''
@@ -1673,7 +1677,7 @@ override_dh_python2:
 """
 RULES_OVERRIDE_PYTHON3 = """
 override_dh_python3:
-        dh_python3
+        dh_python3 %(dh_python_opts)
 %(scripts)s
 """
 
